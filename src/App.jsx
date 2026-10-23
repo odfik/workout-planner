@@ -196,13 +196,15 @@ function Chips({ label, opts, val, set }) {
 }
 
 export default function App() {
-  const [prof, setProf] = useState(() => ld("prof", null));
+  const [prof, setProf] = useState(null); // huskes ikke mellom besøk: appen starter alltid på velkomstsiden
   const [log, setLog] = useState(() => ld("log", []));
-  const [sel, setSel] = useState(prof || {});
+  const [sel, setSel] = useState({});
   const [tab, setTab] = useState("plan");
   const [cur, setCur] = useState(null);       // åpen økt
   const [evalWeek, setEvalWeek] = useState(false);
 
+  useEffect(() => { try { localStorage.removeItem("prof"); } catch {} }, []); // rydder bort gamle lagrede valg
+  const reset = () => { setProf(null); setSel({}); setCur(null); setEvalWeek(false); setTab("plan"); };
   const week = prof ? buildWeek(prof) : [];
   const done = log.filter((l) => l.wk === weekKey() && l.day !== undefined).map((l) => l.day);
   const total = week.filter((x) => x.s).length;
@@ -240,7 +242,7 @@ export default function App() {
       <Chips label="Treningsmål" opts={GOAL} val={sel.goal} set={(v) => setSel({ ...sel, goal: v })} />
       <Chips label="Erfaring" opts={LVL} val={sel.lvl} set={(v) => setSel({ ...sel, lvl: v })} />
       <Chips label="Hvor trener du?" opts={PLC} val={sel.place} set={(v) => setSel({ ...sel, place: v })} />
-      <button className="btn" disabled={!(sel.goal && sel.lvl && sel.place)} onClick={() => { setProf(sel); sv("prof", sel); }}>Vis ukeplan</button>
+      <button className="btn" disabled={!(sel.goal && sel.lvl && sel.place)} onClick={() => setProf(sel)}>Vis ukeplan</button>
     </>);
   } else if (evalWeek) {
     body = (<>
@@ -287,7 +289,10 @@ export default function App() {
         </div>
       ))}
       <div className="card day"><div><b>Slutten av uken</b><div className="mu">Evaluer treningen din</div></div><button className="ghost" onClick={() => setEvalWeek(true)}>Evaluer</button></div>
-      <button className="ghost" onClick={() => { setSel(prof); setProf(null); }}>Endre valg</button>
+      <div className="row" style={{ marginTop: 4 }}>
+        <button className="btn" onClick={reset}>🔄 Lag ny treningsplan</button>
+        <button className="ghost" style={{ width: "100%" }} onClick={() => { setSel(prof); setProf(null); }}>✏️ Endre valg</button>
+      </div>
     </>);
   }
 
